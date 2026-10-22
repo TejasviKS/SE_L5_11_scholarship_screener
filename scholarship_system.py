@@ -7,9 +7,11 @@ WEIGHTS = {"gpa": 10, "credits": 2}
 INCOME_LIMIT = 800000
 CUTOFF = 85
 
+
 def calculate_merit_score(gpa, credit_points):
     """Return merit score from GPA and extracurricular credits."""
     return gpa * WEIGHTS["gpa"] + credit_points * WEIGHTS["credits"]
+
 
 def evaluate_applicant(student_id, test_scores, logs=None):
     """Score one applicant, store the result and return eligibility."""
@@ -24,15 +26,18 @@ def evaluate_applicant(student_id, test_scores, logs=None):
     logs.append(f"{student_id} scored {score}")
     return eligible
 
+
 def change_weights(gpa_weight, credit_weight):
     """Update the merit score weights."""
     WEIGHTS["gpa"] = gpa_weight
     WEIGHTS["credits"] = credit_weight
 
+
 def persist_results(filename="scholarships.json"):
     """Save results to a JSON file."""
     with open(filename, "w", encoding="utf-8") as file:
         json.dump(RESULTS, file)
+
 
 def load_results(filename="scholarships.json"):
     """Load results from a JSON file, if it exists."""
@@ -42,12 +47,14 @@ def load_results(filename="scholarships.json"):
     except (FileNotFoundError, json.JSONDecodeError):
         print("No saved results found, starting fresh.")
 
+
 def print_shortlist():
     """Print all eligible applicants."""
     print("Shortlisted applicants:")
     for student_id, result in RESULTS.items():
         if result["eligible"]:
             print(" ", student_id, "score =", result["score"])
+
 
 def main():
     """Evaluate sample applicants and show the shortlist."""
@@ -57,7 +64,8 @@ def main():
     evaluate_applicant("U004", {"gpa": 6.5})
     try:
         gpa_w = float(input("GPA weight (Enter = 10): ") or WEIGHTS["gpa"])
-        credit_w = float(input("Credits weight (Enter = 2): ") or WEIGHTS["credits"])
+        credit_w = float(input("Credits weight (Enter = 2): ")
+                         or WEIGHTS["credits"])
     except ValueError:
         print("Invalid number, keeping default weights")
     else:
@@ -66,6 +74,7 @@ def main():
     persist_results()
     load_results()
     print_shortlist()
+
 
 if __name__ == "__main__":
     main()
