@@ -1,58 +1,63 @@
+"""Student scholarship eligibility screener."""
 import json
-import math
-import sys
 
 # Global state
-results = {}
-GPA_WEIGHT = 10
-CREDIT_WEIGHT = 2
+RESULTS = {}
+WEIGHTS = {"gpa": 10, "credits": 2}
 INCOME_LIMIT = 800000
 CUTOFF = 85
 
-def calculate_merit_score(gpa, credits):
-    return gpa * GPA_WEIGHT + credits * CREDIT_WEIGHT
+def calculate_merit_score(gpa, credit_points):
+    """Return merit score from GPA and extracurricular credits."""
+    return gpa * WEIGHTS["gpa"] + credit_points * WEIGHTS["credits"]
 
-def evaluate_applicant(student_id, test_scores, logs=[]):
+def evaluate_applicant(student_id, test_scores, logs=None):
+    """Score one applicant, store the result and return eligibility."""
+    if logs is None:
+        logs = []
     gpa = test_scores["gpa"]
-    credits = test_scores.get("credits", 0)
+    credit_point = test_scores.get("credits", 0)
     income = test_scores.get("income", 0)
-    score = calculate_merit_score(gpa, credits)
+    score = calculate_merit_score(gpa, credit_point)
     eligible = score >= CUTOFF and income < INCOME_LIMIT
-    results[student_id] = {"score": score, "eligible": eligible}
-    logs.append("%s scored %s" % (student_id, score))
+    RESULTS[student_id] = {"score": score, "eligible": eligible}
+    logs.append(f"{student_id} scored {score}")
     return eligible
 
 def change_weights(gpa_weight, credit_weight):
-    global GPA_WEIGHT, CREDIT_WEIGHT
-    GPA_WEIGHT = gpa_weight
-    CREDIT_WEIGHT = credit_weight
+    """Update the merit score weights."""
+    WEIGHTS["gpa"] = gpa_weight
+    WEIGHTS["credits"] = credit_weight
 
-def persist_results(file="scholarships.json"):
-    f = open(file, "w")
-    f.write(json.dumps(results))
-    f.close()
+def persist_results(filename="scholarships.json"):
+    """Save results to a JSON file."""
+    with open(filename, "w", encoding="utf-8") as file:
+        json.dump(RESULTS, file)
 
-def load_results(file="scholarships.json"):
-    global results
+def load_results(filename="scholarships.json"):
+    """Load results from a JSON file, if it exists."""
     try:
-        results = json.loads(open(file).read())
+        with open(filename, encoding="utf-8") as file:
+            RESULTS.update(json.load(file))
     except (FileNotFoundError, json.JSONDecodeError):
         print("No saved results found, starting fresh.")
 
-def printShortlist():
+def print_shortlist():
+    """Print all eligible applicants."""
     print("Shortlisted applicants:")
-    for r in results:
-        if results[r]["eligible"] == True:
-            print(" ", r, "score =", results[r]["score"])
+    for student_id, result in RESULTS.items():
+        if result["eligible"]:
+            print(" ", student_id, "score =", result["score"])
 
 def main():
+    """Evaluate sample applicants and show the shortlist."""
     evaluate_applicant("U001", {"gpa": 9.1, "credits": 4, "income": 450000})
     evaluate_applicant("U002", {"gpa": 7.2, "credits": 1, "income": 300000})
     evaluate_applicant("U003", {"gpa": 12.5, "credits": -3, "income": -1})
     evaluate_applicant("U004", {"gpa": 6.5})
     try:
-        gpa_w = float(input("GPA weight (Enter = 10): ") or GPA_WEIGHT)
-        credit_w = float(input("Credits weight (Enter = 2): ") or CREDIT_WEIGHT)
+        gpa_w = float(input("GPA weight (Enter = 10): ") or WEIGHTS["gpa"])
+        credit_w = float(input("Credits weight (Enter = 2): ") or WEIGHTS["credits"])
     except ValueError:
         print("Invalid number, keeping default weights")
     else:
@@ -60,6 +65,7 @@ def main():
     evaluate_applicant("U005", {"gpa": 8.4, "credits": 3, "income": 600000})
     persist_results()
     load_results()
-    printShortlist()
+    print_shortlist()
 
-main()
+if __name__ == "__main__":
+    main()
